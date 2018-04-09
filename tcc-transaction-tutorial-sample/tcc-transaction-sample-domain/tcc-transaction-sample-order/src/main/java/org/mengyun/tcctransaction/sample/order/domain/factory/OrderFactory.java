@@ -18,10 +18,12 @@ public class OrderFactory {
     @Autowired
     ProductRepository productRepository;
 
+
     public Order buildOrder(long payerUserId, long payeeUserId, List<Pair<Long, Integer>> productQuantities) {
 
         Order order = new Order(payerUserId, payeeUserId);
 
+        //获得价格
         for (Pair<Long, Integer> pair : productQuantities) {
             long productId = pair.getLeft();
             order.addOrderLine(new OrderLine(productId, pair.getRight(), productRepository.findById(productId).getPrice()));

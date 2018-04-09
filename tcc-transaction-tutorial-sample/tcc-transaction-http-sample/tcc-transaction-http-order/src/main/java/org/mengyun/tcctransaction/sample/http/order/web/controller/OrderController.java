@@ -46,6 +46,12 @@ public class OrderController {
         return mv;
     }
 
+    /**
+     * 查询商品列表
+     * @param userId
+     * @param shopId
+     * @return
+     */
     @RequestMapping(value = "/user/{userId}/shop/{shopId}", method = RequestMethod.GET)
     public ModelAndView getProductsInShop(@PathVariable long userId,
                                           @PathVariable long shopId) {
@@ -60,6 +66,13 @@ public class OrderController {
         return mv;
     }
 
+    /**
+     * 点击购买
+     * @param userId
+     * @param shopId
+     * @param productId
+     * @return
+     */
     @RequestMapping(value = "/user/{userId}/shop/{shopId}/product/{productId}/confirm", method = RequestMethod.GET)
     public ModelAndView productDetail(@PathVariable long userId,
                                       @PathVariable long shopId,
@@ -67,9 +80,11 @@ public class OrderController {
 
         ModelAndView mv = new ModelAndView("product_detail");
 
+        //查看账户余额
         mv.addObject("capitalAmount", accountService.getCapitalAccountByUserId(userId));
+        //查看红包余额
         mv.addObject("redPacketAmount", accountService.getRedPacketAccountByUserId(userId));
-
+        //查看商品详细信息
         mv.addObject("product", productRepository.findById(productId));
 
         mv.addObject("userId", userId);
@@ -78,21 +93,36 @@ public class OrderController {
         return mv;
     }
 
+    /**
+     * 去支付
+     * @param redPacketPayAmount
+     * @param shopId
+     * @param payerUserId
+     * @param productId
+     * @return
+     */
     @RequestMapping(value = "/placeorder", method = RequestMethod.POST)
     public RedirectView placeOrder(@RequestParam String redPacketPayAmount,
                                    @RequestParam long shopId,
                                    @RequestParam long payerUserId,
                                    @RequestParam long productId) {
 
-
+        //构建支付对象
         PlaceOrderRequest request = buildRequest(redPacketPayAmount, shopId, payerUserId, productId);
 
+        //支付
         String merchantOrderNo = placeOrderService.placeOrder(request.getPayerUserId(), request.getShopId(),
                 request.getProductQuantities(), request.getRedPacketPayAmount());
 
+        //跳转支付结果界面
         return new RedirectView("/payresult/" + merchantOrderNo);
     }
 
+    /**
+     * 支付结果
+     * @param merchantOrderNo
+     * @return
+     */
     @RequestMapping(value = "/payresult/{merchantOrderNo}", method = RequestMethod.GET)
     public ModelAndView getPayResult(@PathVariable String merchantOrderNo) {
 
@@ -117,6 +147,14 @@ public class OrderController {
     }
 
 
+    /**
+     * 构建支付对象
+     * @param redPacketPayAmount
+     * @param shopId
+     * @param payerUserId
+     * @param productId
+     * @return
+     */
     private PlaceOrderRequest buildRequest(String redPacketPayAmount, long shopId, long payerUserId, long productId) {
         BigDecimal redPacketPayAmountInBigDecimal = new BigDecimal(redPacketPayAmount);
         if (redPacketPayAmountInBigDecimal.compareTo(BigDecimal.ZERO) < 0)

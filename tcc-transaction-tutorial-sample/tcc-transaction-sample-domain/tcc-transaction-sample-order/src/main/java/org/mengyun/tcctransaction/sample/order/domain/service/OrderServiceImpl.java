@@ -24,8 +24,11 @@ public class OrderServiceImpl {
 
     @Transactional
     public Order createOrder(long payerUserId, long payeeUserId, List<Pair<Long, Integer>> productQuantities) {
+
+        //构建订单
         Order order = orderFactory.buildOrder(payerUserId, payeeUserId, productQuantities);
 
+        //保存订单
         orderRepository.createOrder(order);
 
         return order;

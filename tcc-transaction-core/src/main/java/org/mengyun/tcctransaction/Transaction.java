@@ -82,6 +82,9 @@ public class Transaction implements Serializable {
     }
 
 
+    /**
+     * 提交事务
+     */
     public void commit() {
 
         for (Participant participant : participants) {
@@ -89,6 +92,9 @@ public class Transaction implements Serializable {
         }
     }
 
+    /**
+     * 回滚事务
+     */
     public void rollback() {
         for (Participant participant : participants) {
             participant.rollback();

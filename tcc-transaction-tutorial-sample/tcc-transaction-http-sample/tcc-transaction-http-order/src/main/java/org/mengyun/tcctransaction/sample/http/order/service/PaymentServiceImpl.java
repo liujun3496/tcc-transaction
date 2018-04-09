@@ -27,27 +27,41 @@ public class PaymentServiceImpl {
     OrderRepository orderRepository;
 
 
+    /**
+     * 支付环节
+     * @param order
+     * @param redPacketPayAmount
+     * @param capitalPayAmount
+     */
     @Compensable(confirmMethod = "confirmMakePayment", cancelMethod = "cancelMakePayment", asyncConfirm = true)
     @Transactional
     public void makePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
+        if (order.getStatus().equals("DRAFT")) {
+            System.out.println("---");
+        }
 
         System.out.println("order try make payment called.time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         //check if the order status is DRAFT, if no, means that another call makePayment for the same order happened, ignore this call makePayment.
         if (order.getStatus().equals("DRAFT")) {
 
+           //设置支付状态为支付中
             order.pay(redPacketPayAmount, capitalPayAmount);
             try {
+                //更新支付状态位支付中
                 orderRepository.updateOrder(order);
             } catch (OptimisticLockingFailureException e) {
                 //ignore the concurrently update order exception, ensure idempotency.
             }
         }
 
+        //资金账户支付
         String result = tradeOrderServiceProxy.record(null, buildCapitalTradeOrderDto(order));
+        //红包账户支付
         String result2 = tradeOrderServiceProxy.record(null, buildRedPacketTradeOrderDto(order));
     }
 
+    //confirm 方法,设置为支付成功
     public void confirmMakePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
 
 
@@ -62,12 +76,19 @@ public class PaymentServiceImpl {
         Order foundOrder = orderRepository.findByMerchantOrderNo(order.getMerchantOrderNo());
 
         //check order status, only if the status equals DRAFT, then confirm order
+
         if (foundOrder != null && foundOrder.getStatus().equals("PAYING")) {
             order.confirm();
             orderRepository.updateOrder(order);
         }
     }
 
+    /**
+     * 取消步骤，设置为支付失败
+     * @param order
+     * @param redPacketPayAmount
+     * @param capitalPayAmount
+     */
     public void cancelMakePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {
 
 

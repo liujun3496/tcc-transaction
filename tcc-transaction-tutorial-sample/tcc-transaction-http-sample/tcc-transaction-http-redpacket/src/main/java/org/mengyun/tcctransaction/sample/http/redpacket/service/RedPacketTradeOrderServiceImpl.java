@@ -38,6 +38,7 @@ public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderServic
             throw new RuntimeException(e);
         }
 
+       // int i =10/0;
         System.out.println("red packet try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         TradeOrder foundTradeOrder = tradeOrderRepository.findByMerchantOrderNo(tradeOrderDto.getMerchantOrderNo());

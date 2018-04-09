@@ -29,14 +29,25 @@ public class PlaceOrderServiceImpl {
     PaymentServiceImpl paymentService;
 
 
+    /**
+     * 点击去支付执行的方法
+     * @param payerUserId
+     * @param shopId
+     * @param productQuantities
+     * @param redPacketPayAmount
+     * @return
+     */
     public String placeOrder(long payerUserId, long shopId, List<Pair<Long, Integer>> productQuantities, BigDecimal redPacketPayAmount) {
+        //根据商户ID 查找商户信息
         Shop shop = shopRepository.findById(shopId);
 
+        //创建并保存订单
         Order order = orderService.createOrder(payerUserId, shop.getOwnerUserId(), productQuantities);
 
         Boolean result = false;
 
         try {
+            //支付
             paymentService.makePayment(order, redPacketPayAmount, order.getTotalAmount().subtract(redPacketPayAmount));
 
         } catch (ConfirmingException confirmingException) {
